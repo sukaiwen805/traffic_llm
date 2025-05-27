@@ -8,7 +8,7 @@ def test_api():
     env = gym.make(
         "sumo-rl-v0",
         num_seconds=100,
-        use_gui=False,
+        use_gui=True,
         net_file="sumo_rl/nets/single-intersection/single-intersection.net.xml",
         route_file="sumo_rl/nets/single-intersection/single-intersection.rou.xml",
     )
