@@ -18,3 +18,18 @@
    此时文件夹中已生成路网文件和地形文件
 
 ### 2、生成车流文件 rou.xml
+- 输入命令
+   ```bash
+   python ...\sumo-0.30.0\tools\randomTrips.py -n map.net.xml -e 100 -l
+   ```
+  生成随机行驶的车辆，-e 100 -l 为随机工具的配置，100为车辆数，可按实际情况设置
+- 最后，使用 bin 文件夹下的 duarouter.exe 把随机的旅程和道路信息结合起来获得了车流文件（rou.xml）
+- 输入命令
+  ```bash
+   python ...\sumo-0.30.0\tools\randomTrips.py -n map.net.xml -r map.rou.xml -e 100 -l
+   ```
+- 在文件夹中可以看到车流文件 map.rou.xml
+- 最后编写配置文件 (*.sumo.cfg) 在 记事本 中输入下面的代码，保存为 map.sumo.cfg 文件
+- 打开 sumo-gui.exe ，点击 File->Open Simulation Configuration ，找到配置文件，点击 “OK”
+
+### 建议：快速生成来自真实世界数据的路网，使用osm2netconvert与netconvert工具。对于信号灯、车辆流通方向等非常影响实验结果的配置，得到net.xml文件后，在NetEdit中设计
