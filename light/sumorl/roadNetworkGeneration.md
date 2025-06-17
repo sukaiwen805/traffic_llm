@@ -1,6 +1,6 @@
 # 路网生成方法
 
-### 1、生成路网net.xml文件
+## 1、生成路网net.xml文件
 - 运用netedit手动生成路网
    复杂交通情况不建议
    建议使用打开 [openstreetmap](https://www.openstreetmap.org/) 官网，搜索地名，手动框选需要导出道路区域并导出，下载生成的 *.osm 文件
@@ -32,4 +32,13 @@
 - 最后编写配置文件 (*.sumo.cfg) 在 记事本 中输入下面的代码，保存为 map.sumo.cfg 文件
 - 打开 sumo-gui.exe ，点击 File->Open Simulation Configuration ，找到配置文件，点击 “OK”
 
-### 建议：快速生成来自真实世界数据的路网，使用osm2netconvert与netconvert工具。对于信号灯、车辆流通方向等非常影响实验结果的配置，得到net.xml文件后，在NetEdit中设计
+ 建议：快速生成来自真实世界数据的路网，使用osm2netconvert与netconvert工具。对于信号灯、车辆流通方向等非常影响实验结果的配置，得到net.xml文件后，在NetEdit中设计
+
+
+## 3、配置文件解析
+### net.xml
+- phase:GGrrrGGrrr
+  =>G代表可通车，r代表不通车;如何判断是相关状态对应的是哪一条道路（北向开始，顺时针方向）
+- duration:代表当前状态会持续多长时间
+### rou.xml
+- routes 标签：route中写车道通行方向，flow中写投放车辆数量与开始结束时间
