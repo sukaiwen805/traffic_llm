@@ -623,7 +623,7 @@ import gymnasium as gym
 import os
 import sys
 import random
-from sumo_rl.environment.traffic_signal import TrafficSignal
+from light.sumorl.sumo_rl.environment.traffic_signal import TrafficSignal
 
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
@@ -633,6 +633,9 @@ else:
 
 import traci
 import sumolib
+
+import inspect
+print("Using TrafficSignal from:", inspect.getfile(TrafficSignal))
 
 
 class SumoEnv(gym.Env):
