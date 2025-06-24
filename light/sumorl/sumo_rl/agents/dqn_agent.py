@@ -2,9 +2,10 @@ import random
 import math
 import torch
 import torch.nn as nn
-import networks
 from datetime import datetime
 from collections import namedtuple
+
+from light.sumorl.sumo_rl import networks
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
