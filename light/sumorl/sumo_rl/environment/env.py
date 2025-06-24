@@ -623,7 +623,7 @@ import gymnasium as gym
 import os
 import sys
 import random
-from environment.traffic_signal import TrafficSignal
+from sumo_rl.environment.traffic_signal import TrafficSignal
 
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
