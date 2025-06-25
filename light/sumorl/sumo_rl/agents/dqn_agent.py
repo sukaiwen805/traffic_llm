@@ -79,32 +79,37 @@ class DqnAgent:
                 return sorted_indices[0]
 
     def learn(self):
-        if self.mode == 'train':
-            loss_fn = nn.MSELoss()
-            optimizer = torch.optim.SGD(self.policy_net.parameters(), lr=0.00025)
-            if self.replay.steps_done <= 10000:
-                return
-            transitions = self.replay.sample(self.batch_size)
-            batch = Transition(*zip(*transitions))
-            state_batch = torch.cat(batch.state)
-            action_batch = torch.cat(batch.action).view(self.batch_size, 1)
-            next_state_batch = torch.cat(batch.next_state)
-            reward_batch = torch.cat(batch.reward).view(self.batch_size, 1)
-            state_action_values = self.policy_net(state_batch).gather(1, action_batch)
-            with torch.no_grad():
-                argmax_action = self.policy_net(next_state_batch).max(1)[1].view(self.batch_size, 1)
-                expected_state_action_values = reward_batch + self.gamma * self.target_net(next_state_batch).gather(1, argmax_action)
 
-            loss = loss_fn(state_action_values, expected_state_action_values)
-            optimizer.zero_grad()
-            loss.backward()
-            for param in self.policy_net.parameters():
-                param.grad.data.clamp_(-1, 1)
-            optimizer.step()
-            self.learn_steps += 1
+        if self.mode != 'train':
+            return
+        if self.replay.size < self.batch_size:
+            return
 
-            if self.learn_steps % self.target_update == 0:
-                self.target_net.load_state_dict(self.policy_net.state_dict())
-                time = str(datetime.now()).split('.')[0]
-                time = time.replace('-', '').replace(' ', '_').replace(':', '')
-                torch.save(self.policy_net.state_dict(), 'weights/weights_{0}_{1}.pth'.format(time, self.learn_steps))
+        print(f"[DEBUG] Learning... steps_done={self.replay.steps_done}, learn_steps={self.learn_steps}")
+
+        loss_fn = nn.MSELoss()
+        optimizer = torch.optim.SGD(self.policy_net.parameters(), lr=0.00025)
+        transitions = self.replay.sample(self.batch_size)
+        batch = Transition(*zip(*transitions))
+        state_batch = torch.cat(batch.state)
+        action_batch = torch.cat(batch.action).view(self.batch_size, 1)
+        next_state_batch = torch.cat(batch.next_state)
+        reward_batch = torch.cat(batch.reward).view(self.batch_size, 1)
+        state_action_values = self.policy_net(state_batch).gather(1, action_batch)
+        with torch.no_grad():
+            argmax_action = self.policy_net(next_state_batch).max(1)[1].view(self.batch_size, 1)
+            expected_state_action_values = reward_batch + self.gamma * self.target_net(next_state_batch).gather(1,argmax_action)
+
+        loss = loss_fn(state_action_values, expected_state_action_values)
+        optimizer.zero_grad()
+        loss.backward()
+        for param in self.policy_net.parameters():
+            param.grad.data.clamp_(-1, 1)
+        optimizer.step()
+        self.learn_steps += 1
+
+        if self.learn_steps % self.target_update == 0:
+            self.target_net.load_state_dict(self.policy_net.state_dict())
+            time = str(datetime.now()).split('.')[0]
+            time = time.replace('-', '').replace(' ', '_').replace(':', '')
+            torch.save(self.policy_net.state_dict(), 'weights/weights_{0}_{1}.pth'.format(time, self.learn_steps))
