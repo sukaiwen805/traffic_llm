@@ -462,16 +462,21 @@ class TrafficSignal:
             self.dict_lane_veh = {}
             for lane_id in self.lanes_id:
                 self.dict_lane_veh[lane_id] = self.sumo.lane.getLastStepHaltingNumber(lane_id)
-            # merge wait_num by actions
-            dict_action_wait_num = [self.dict_lane_veh['n_t_0'] + self.dict_lane_veh['s_t_0'],
-                                    self.dict_lane_veh['n_t_1'] + self.dict_lane_veh['s_t_1'],
-                                    self.dict_lane_veh['e_t_0'] + self.dict_lane_veh['w_t_0'],
-                                    self.dict_lane_veh['e_t_1'] + self.dict_lane_veh['w_t_1']]
-            best_action = np.argmax(dict_action_wait_num)
-            if best_action == do_action:
-                self.last_measure = 1
-            else:
-                self.last_measure = -1
+
+            dict_action_wait_num = [
+                self.dict_lane_veh['n_t_0'] + self.dict_lane_veh['s_t_0'],
+                self.dict_lane_veh['n_t_1'] + self.dict_lane_veh['s_t_1'],
+                self.dict_lane_veh['e_t_0'] + self.dict_lane_veh['w_t_0'],
+                self.dict_lane_veh['e_t_1'] + self.dict_lane_veh['w_t_1'],
+            ]
+
+            total_waiting = sum(dict_action_wait_num) + 1e-6  
+            action_wait = dict_action_wait_num[do_action]
+
+            # 计算当前动作对应的等待占比
+            ratio = action_wait / total_waiting  # ∈ [0, 1]
+
+            self.last_measure = 2 * ratio - 1
 
         if update_reward:
             return self.last_measure
