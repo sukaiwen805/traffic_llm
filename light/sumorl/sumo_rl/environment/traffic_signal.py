@@ -478,6 +478,13 @@ class TrafficSignal:
             ratio = action_wait / (total_waiting + 1e-6)  # ∈ [0, 1]
             reward = 2 * ratio - 1
 
+            # 平均等待时间（可选）
+            waiting_times = [
+                self.sumo.lane.getWaitingTime(lane_id)
+                for lane_id in self.lanes_id
+            ]
+            avg_waiting_time = sum(waiting_times) / (len(waiting_times) + 1e-6)
+
             # 存储最近统计数据
             self.latest_info = {
                 'reward': reward,
@@ -485,7 +492,8 @@ class TrafficSignal:
                 'action_waiting': action_wait,
                 'max_waiting': max(dict_action_wait_num),
                 'min_waiting': min(dict_action_wait_num),
-                'waiting_ratio': ratio
+                'waiting_ratio': ratio,
+                'avg_waiting_time': avg_waiting_time
             }
 
             self.last_measure = reward
