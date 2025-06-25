@@ -699,7 +699,10 @@ class SumoEnv(gym.Env):
         next_state = self._compute_next_state()
         reward = self._compute_reward(start, do_action)
         done = self._compute_done()
-        info = {'do_action': do_action}
+        info = {'do_action': do_action,
+                'reward': reward,
+                'stats': getattr(self.traffic_signal, 'latest_info', {}) # 统计信息
+                }
         return next_state, reward, done, info
 
     def _random_skip(self, skip_range=30):

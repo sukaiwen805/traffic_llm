@@ -463,6 +463,7 @@ class TrafficSignal:
             for lane_id in self.lanes_id:
                 self.dict_lane_veh[lane_id] = self.sumo.lane.getLastStepHaltingNumber(lane_id)
 
+            # 各动作方向的等待车辆总数
             dict_action_wait_num = [
                 self.dict_lane_veh['n_t_0'] + self.dict_lane_veh['s_t_0'],
                 self.dict_lane_veh['n_t_1'] + self.dict_lane_veh['s_t_1'],
@@ -470,13 +471,24 @@ class TrafficSignal:
                 self.dict_lane_veh['e_t_1'] + self.dict_lane_veh['w_t_1'],
             ]
 
-            total_waiting = sum(dict_action_wait_num) + 1e-6  
+            total_waiting = sum(dict_action_wait_num) + 1e-6
             action_wait = dict_action_wait_num[do_action]
 
             # 计算当前动作对应的等待占比
-            ratio = action_wait / total_waiting  # ∈ [0, 1]
+            ratio = action_wait / (total_waiting + 1e-6)  # ∈ [0, 1]
+            reward = 2 * ratio - 1
 
-            self.last_measure = 2 * ratio - 1
+            # 存储最近统计数据
+            self.latest_info = {
+                'reward': reward,
+                'total_waiting': total_waiting,
+                'action_waiting': action_wait,
+                'max_waiting': max(dict_action_wait_num),
+                'min_waiting': min(dict_action_wait_num),
+                'waiting_ratio': ratio
+            }
+
+            self.last_measure = reward
 
         if update_reward:
             return self.last_measure
