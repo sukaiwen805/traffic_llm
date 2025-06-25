@@ -50,6 +50,9 @@ def main(argv):
         env.train_state = initial_state
         done = False
         invalid_action = False
+        episode_rewards = []
+        episode_waiting = []
+        episode_ratios = []
         while not done:
             state = env.compute_state
             action = agent.select_action(state, replay_buffer.steps_done, invalid_action)
@@ -58,13 +61,27 @@ def main(argv):
                 invalid_action = True
                 continue
             invalid_action = False
-
+            #保存经验
             replay_buffer.add(env.train_state, next_state, reward, info['do_action'])
             agent.learn()
 
+            # 收集统计信息
+            stats = info.get('stats', {})
+            if stats:
+                episode_rewards.append(stats.get('reward', 0))
+                episode_waiting.append(stats.get('total_waiting', 0))
+                episode_ratios.append(stats.get('waiting_ratio', 0))
+
         env.close()
 
-        print('i_episode:', episode)
+        avg_reward = sum(episode_rewards) / len(episode_rewards) if episode_rewards else 0
+        avg_waiting = sum(episode_waiting) / len(episode_waiting) if episode_waiting else 0
+        avg_ratio = sum(episode_ratios) / len(episode_ratios) if episode_ratios else 0
+
+        print(f'==== Episode {episode} Summary ====')
+        print(f'Average Reward: {avg_reward:.3f}')
+        print(f'Average Total Waiting Vehicles: {avg_waiting:.2f}')
+        print(f'Average Waiting Ratio of Action: {avg_ratio:.3f}')
         print('eps_threshold = :', FLAGS.eps_end + (FLAGS.eps_start - FLAGS.eps_end) *
               math.exp(-1. * replay_buffer.steps_done / FLAGS.eps_decay))
         print('learn_steps:', agent.learn_steps)
