@@ -45,6 +45,10 @@ def main(argv):
     agent = DqnAgent(FLAGS.mode, replay_buffer, FLAGS.target_update, FLAGS.gamma, FLAGS.eps_start, FLAGS.eps_end,
                      FLAGS.eps_decay, input_dim, output_dim, FLAGS.batch_size, FLAGS.network_file)
 
+    prev_avg_waiting = None
+    prev_avg_waiting_time = None
+    prev_avg_queue = None
+
     for episode in range(FLAGS.num_episodes):
         initial_state = env.reset()
         env.train_state = initial_state
@@ -53,6 +57,9 @@ def main(argv):
         episode_rewards = []
         episode_waiting = []
         episode_ratios = []
+        episode_max_waiting = []
+        episode_min_waiting = []
+        episode_waiting_time = []
         while not done:
             state = env.compute_state
             action = agent.select_action(state, replay_buffer.steps_done, invalid_action)
@@ -71,21 +78,40 @@ def main(argv):
                 episode_rewards.append(stats.get('reward', 0))
                 episode_waiting.append(stats.get('total_waiting', 0))
                 episode_ratios.append(stats.get('waiting_ratio', 0))
+                episode_max_waiting.append(stats.get('max_waiting', 0))
+                episode_min_waiting.append(stats.get('min_waiting', 0))
+                episode_waiting_time.append(stats.get('avg_waiting_time', 0))
 
         env.close()
 
         avg_reward = sum(episode_rewards) / len(episode_rewards) if episode_rewards else 0
         avg_waiting = sum(episode_waiting) / len(episode_waiting) if episode_waiting else 0
         avg_ratio = sum(episode_ratios) / len(episode_ratios) if episode_ratios else 0
+        avg_max_waiting = sum(episode_max_waiting) / len(episode_max_waiting) if episode_max_waiting else 0
+        avg_min_waiting = sum(episode_min_waiting) / len(episode_min_waiting) if episode_min_waiting else 0
+        avg_waiting_time = sum(episode_waiting_time) / len(episode_waiting_time) if episode_waiting_time else 0
+        avg_queue = sum(episode_max_waiting) / len(episode_max_waiting) if episode_max_waiting else 0
+
 
         print(f'==== Episode {episode} Summary ====')
         print(f'Average Reward: {avg_reward:.3f}')
         print(f'Average Total Waiting Vehicles: {avg_waiting:.2f}')
         print(f'Average Waiting Ratio of Action: {avg_ratio:.3f}')
+        print(f'Average Waiting Time per Vehicle: {avg_waiting_time:.2f} s')
+        print(f'Maximum Queue Length: {avg_max_waiting:.0f}')
+        print(f'Minimum Queue Length: {avg_min_waiting:.0f}')
         print('eps_threshold = :', FLAGS.eps_end + (FLAGS.eps_start - FLAGS.eps_end) *
               math.exp(-1. * replay_buffer.steps_done / FLAGS.eps_decay))
-        print('learn_steps:', agent.learn_steps)
+        if prev_avg_waiting is not None:
+            print(f'Compared to Episode {episode - 1}:')
+            print(f'  ↓ Queue Length Reduced By     : {prev_avg_queue - avg_queue:.2f} vehicles')
+            print(f'  ↓ Total Waiting Reduced By    : {prev_avg_waiting - avg_waiting:.2f} vehicles')
+            print(f'  ↓ Waiting Time Reduced By     : {prev_avg_waiting_time - avg_waiting_time:.2f} seconds')
+        print('======learn_steps:', agent.learn_steps, "========")
 
+        prev_avg_waiting = avg_waiting
+        prev_avg_waiting_time = avg_waiting_time
+        prev_avg_queue = avg_queue
 
 if __name__ == '__main__':
     app.run(main)
