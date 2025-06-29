@@ -5,6 +5,7 @@ from light.sumorl.sumo_rl.agents.dqn_agent import DqnAgent
 from replay import ReplayBuffer
 import torch
 import math
+import pandas as pd
 
 FLAGS = flags.FLAGS
 flags.DEFINE_integer('skip_range', 50, 'time(seconds) range for skip randomly at the beginning')
@@ -13,7 +14,7 @@ flags.DEFINE_integer('yellow_time', 2, 'time for yellow phase')
 flags.DEFINE_integer('delta_rs_update_time', 10, 'time for calculate reward')
 flags.DEFINE_string('net_file', 'nets/2way-single-intersection/single-intersection.net.xml', '')
 flags.DEFINE_string('route_file', 'nets/2way-single-intersection/single-intersection-vhvh.rou.xml', '')
-flags.DEFINE_bool('use_gui', True, 'use sumo-gui instead of sumo')
+flags.DEFINE_bool('use_gui', False, 'use sumo-gui instead of sumo')
 flags.DEFINE_integer('num_episodes', 301, '')
 flags.DEFINE_string('network', 'dqn', '')
 flags.DEFINE_string('mode', 'train', '')
@@ -60,6 +61,7 @@ def main(argv):
         episode_max_waiting = []
         episode_min_waiting = []
         episode_waiting_time = []
+        episode_records = []  # 保存当前 episode 的所有 step 信息
         while not done:
             state = env.compute_state
             action = agent.select_action(state, replay_buffer.steps_done, invalid_action)
@@ -68,6 +70,23 @@ def main(argv):
                 invalid_action = True
                 continue
             invalid_action = False
+
+            # 收集详细数据
+            if next_state is not None and reward is not None:
+                step_record = {
+                    'episode': episode,
+                    'timestamp': env.sumo.simulation.getTime(),
+                    'intersection_id': env.ts_id,
+                    'action': info['do_action'],
+                    'prev_state': env.train_state.tolist(),
+                    'next_state': next_state.tolist(),
+                    'reward': reward.item() if isinstance(reward, torch.Tensor) else reward,
+                }
+                # 合并统计信息
+                stats = info.get('stats', {})
+                step_record.update(stats)
+                episode_records.append(step_record)
+
             #保存经验
             replay_buffer.add(env.train_state, next_state, reward, info['do_action'])
             agent.learn()
@@ -112,6 +131,11 @@ def main(argv):
         prev_avg_waiting = avg_waiting
         prev_avg_waiting_time = avg_waiting_time
         prev_avg_queue = avg_queue
+
+        if episode_records:
+            df_episode = pd.DataFrame(episode_records)
+            df_episode.to_csv(f'logs/episode_{episode}_trace.csv', index=False)
+            episode_records.clear()
 
 if __name__ == '__main__':
     app.run(main)
