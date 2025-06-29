@@ -85,7 +85,6 @@ class DqnAgent:
         if self.replay.size < self.batch_size:
             return
 
-        print(f"[DEBUG] Learning... steps_done={self.replay.steps_done}, learn_steps={self.learn_steps}")
 
         loss_fn = nn.MSELoss()
         optimizer = torch.optim.SGD(self.policy_net.parameters(), lr=0.00025)
@@ -112,4 +111,4 @@ class DqnAgent:
             self.target_net.load_state_dict(self.policy_net.state_dict())
             time = str(datetime.now()).split('.')[0]
             time = time.replace('-', '').replace(' ', '_').replace(':', '')
-            torch.save(self.policy_net.state_dict(), 'weights/weights_{0}_{1}.pth'.format(time, self.learn_steps))
+            # torch.save(self.policy_net.state_dict(), 'weights/weights_{0}_{1}.pth'.format(time, self.learn_steps))
