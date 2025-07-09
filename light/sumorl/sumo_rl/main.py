@@ -5,8 +5,10 @@ from light.sumorl.sumo_rl.agents.dqn_agent import DqnAgent
 from replay import ReplayBuffer
 import torch
 import math
+
 import json
 import os
+
 import pandas as pd
 
 FLAGS = flags.FLAGS
@@ -63,8 +65,9 @@ def main(argv):
         episode_max_waiting = []
         episode_min_waiting = []
         episode_waiting_time = []
-        episode_records = []  # 用于保存每个episode的所有step信息
 
+        episode_records = []  # 保存当前 episode 的所有 step 信息
+        
         while not done:
             state = env.compute_state
             action = agent.select_action(state, replay_buffer.steps_done, invalid_action)
@@ -85,16 +88,19 @@ def main(argv):
                     'prev_state': env.train_state.tolist(),
                     'next_state': next_state.tolist(),
                     'reward': reward.item() if isinstance(reward, torch.Tensor) else reward,
+
                     'queue_length': info.get('stats', {}).get('total_waiting', 0),
                     'waiting_time': info.get('stats', {}).get('avg_waiting_time', 0),
                     'waiting_ratio': info.get('stats', {}).get('waiting_ratio', 0),
+
                 }
                 # 合并统计信息
                 stats = info.get('stats', {})
                 step_record.update(stats)
                 episode_records.append(step_record)
 
-            # 保存经验
+            #保存经验
+
             replay_buffer.add(env.train_state, next_state, reward, info['do_action'])
             agent.learn()
 
@@ -138,6 +144,7 @@ def main(argv):
         prev_avg_waiting = avg_waiting
         prev_avg_waiting_time = avg_waiting_time
         prev_avg_queue = avg_queue
+
 
         # 保存为JSON格式
         if episode_records:
